@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日程任务管理器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, sans-serif;
+        }
+        body {
+            background-color: #f5f7fa;
+            padding: 10px;
+            padding-bottom: 70px;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #4080ff;
+            color: white;
+            font-size: 13px;
+            transition: all .2s ease;
+        }
+        button:hover {
+            background: #2f6bdb;
+        }
+        button.active {
+            background: #225bcc;
+        }
+        .btn-today {
+            background: #27ae60;
+        }
+        .btn-today:hover {
+            background: #1f8f4e;
+        }
+        .btn-clear-day {
+            background: #e67e22;
+        }
+        .nav-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .card {
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px #00000010;
+        }
+        .input-area {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        #taskInput {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 120px;
+        }
+        select {
+            padding: 7px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        /* 日记区域样式 */
+        .diary-wrap {
+            margin: 12px 0;
+        }
+        .diary-title {
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        #diaryTextarea {
+            width: 100%;
+            min-height: 70px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            resize: vertical;
+            font-size: 14px;
+        }
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        .task-item.task-done .task-text {
+            text-decoration: line-through;
+            color: #999;
+        }
+        .task-text {
+            flex: 1;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .task-text:hover {
+            color: #4080ff;
+        }
+        .del-btn {
+            background: #ff4d4f;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        .priority-tag {
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #fff;
+        }
+        .pri-high { background: #e74c3c; }
+        .pri-mid { background: #f39c12; }
+        .pri-low { background: #3498db; }
+        .date-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        .week-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-top: 8px;
+        }
+        .day-cell {
+            border: 1px solid #e8e8e8;
+            padding: 4px;
+            min-height: 80px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .month-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-top: 8px;
+        }
+        .month-cell {
+            border: 1px solid #e8e8e8;
+            padding: 4px;
+            min-height: 70px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .today-cell {
+            background: #e8f7ef;
+            border-color: #27ae60;
+        }
+        .view-pane {
+            opacity: 0;
+            transform: translateY(8px);
+            pointer-events: none;
+            height: 0;
+            overflow: hidden;
+            transition: opacity 300ms ease, transform 300ms ease, height 300ms ease;
+        }
+        .view-pane.active {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+            height: auto;
+            overflow: visible;
+        }
+        .fixed-today-bar {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 12px;
+            text-align: center;
+            z-index: 99;
+        }
+        .fixed-today-bar button {
+            padding: 8px 16px;
+            box-shadow: 0 2px 8px #0003;
+            font-size: 13px;
+        }
+        .task-mini {
+            font-size: 11px;
+            margin: 2px 0;
+            color: #444;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            gap: 2px;
+            align-items: center;
+        }
+        .task-mini.done {
+            color: #aaa;
+            text-decoration: line-through;
+        }
+        .week-header, .month-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+        .week-header div, .month-header div {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="view-btn active" data-view="day">日任务</button>
+        <button class="view-btn" data-view="week">周任务</button>
+        <button class="view-btn" data-view="month">月任务</button>
+    </div>
+
+    <div class="card">
+        <div class="nav-row">
+            <button id="prevBtn">上一日</button>
+            <div class="date-title" id="dateTitle"></div>
+            <button id="nextBtn">下一日</button>
+            <button class="btn-clear-day" id="clearDayBtn">清空</button>
+        </div>
+
+        <div class="input-area" id="dayInputWrap">
+            <input id="taskInput" placeholder="输入新任务，回车添加">
+            <select id="prioritySelect">
+                <option value="low">低</option>
+                <option value="mid" selected>中</option>
+                <option value="high">高</option>
+            </select>
+            <button id="addTaskBtn">添加</button>
+        </div>
+
+        <!-- 日视图 -->
+        <div id="dayView" class="view-pane active">
+            <div id="taskList"></div>
+            <div class="diary-wrap">
+                <div class="diary-title">📝今日体会</div>
+                <textarea id="diaryTextarea" placeholder="写下今天的感想..."></textarea>
+            </div>
+        </div>
+
+        <!-- 周视图 -->
+        <div id="weekView" class="view-pane">
+            <div class="week-header">
+                <div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div>
+            </div>
+            <div class="week-grid" id="weekGrid"></div>
+        </div>
+
+        <!-- 月视图 -->
+        <div id="monthView" class="view-pane">
+            <div class="month-header">
+                <div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div>
+            </div>
+            <div class="month-grid" id="monthGrid"></div>
+        </div>
+    </div>
+
+    <div class="fixed-today-bar">
+        <button class="btn-today" id="goTodayBtn">回到今天</button>
+    </div>
+
+<script>
+const STORAGE_KEY = "schedule_task_data";
+let currentView = "day";
+let currentDate = new Date();
+const todayStr = getDayStr(new Date());
+
+function loadTasks(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+function saveTasks(tasks){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+}
+function getDayStr(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function saveDiary(){
+  const tasks = loadTasks();
+  const key = getDayStr(currentDate);
+  if(!tasks[key]) tasks[key] = {list:[],diary:""};
+  if(typeof tasks[key] === "array"){
+    tasks[key] = {list:tasks[key],diary:""};
+  }
+  tasks[key].diary = document.getElementById("diaryTextarea").value;
+  saveTasks(tasks);
+}
+function loadDiary(){
+  const tasks = loadTasks();
+  const key = getDayStr(currentDate);
+  let diary = "";
+  if(tasks[key]){
+    if(Array.isArray(tasks[key])){
+      diary = "";
+    }else{
+      diary = tasks[key].diary || "";
+    }
+  }
+  document.getElementById("diaryTextarea").value = diary;
+}
+
+function switchView(toView){
+  saveDiary();
+  currentView = toView;
+  document.querySelectorAll('.view-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.view === toView);
+  })
+  document.querySelectorAll('.view-pane').forEach(p=>{
+    p.classList.remove('active');
+  })
+  document.getElementById(toView+'View').classList.add('active');
+  document.getElementById('dayInputWrap').style.display = toView==='day'?'flex':'none';
+  renderAll();
+}
+
+function shiftDate(delta){
+  saveDiary();
+  if(currentView === 'day'){
+    currentDate.setDate(currentDate.getDate()+delta);
+  }else if(currentView === 'week'){
+    currentDate.setDate(currentDate.getDate()+delta*7);
+  }else if(currentView === 'month'){
+    currentDate.setMonth(currentDate.getMonth()+delta);
+  }
+  renderAll();
+}
+function goToday(){
+  saveDiary();
+  currentDate = new Date();
+  switchView('day');
+}
+
+function renderTitle(){
+  const el = document.getElementById('dateTitle');
+  const y = currentDate.getFullYear(), m=currentDate.getMonth()+1, d=currentDate.getDate();
+  if(currentView === 'day'){
+    el.innerText = `${y}年${m}月${d}日`;
+  }else if(currentView === 'week'){
+    el.innerText = `${y}年 本周`;
+  }else{
+    el.innerText = `${y}年${m}月`;
+  }
+}
+
+function renderDayView(){
+  const tasks = loadTasks();
+  const key = getDayStr(currentDate);
+  const dayData = tasks[key] || {list:[],diary:""};
+  const dayTasks = Array.isArray(dayData) ? dayData : dayData.list;
+  const listEl = document.getElementById('taskList');
+  listEl.innerHTML = '';
+  dayTasks.forEach((t, idx)=>{
+    const div = document.createElement('div');
+    div.className = 'task-item ' + (t.done?'task-done':'');
+    const priClass = t.priority || "mid";
+    div.innerHTML = `
+    <input type="checkbox" ${t.done?'checked':''} data-idx="${idx}">
+    <span class="priority-tag pri-${priClass}">${getPriText(t.priority)}</span>
+    <div class="task-text" data-idx="${idx}">${escapeHtml(t.text)}</div>
+    <button class="del-btn" data-idx="${idx}">删</button>
+    `;
+    listEl.appendChild(div);
+  })
+  loadDiary();
+}
+
+function getPriText(pri){
+  if(pri === "high") return "高";
+  if(pri === "mid") return "中";
+  return "低";
+}
+function addTask(){
+  const input = document.getElementById('taskInput');
+  const text = input.value.trim();
+  const pri = document.getElementById('prioritySelect').value;
+  if(!text) return;
+  const tasks = loadTasks();
+  const key = getDayStr(currentDate);
+  if(!tasks[key]) tasks[key] = {list:[],diary:""};
+  if(Array.isArray(tasks[key])){
+    tasks[key] = {list:tasks[key],diary:""};
+  }
+  tasks[key].list.push({text, done:false, priority:pri});
+  saveTasks(tasks);
+  input.value='';
+  renderDayView();
+}
+
+function editTask(idx){
+  const tasks = loadTasks();
+  const key = getDayStr(currentDate);
+  const dayData = tasks[key];
+  const task = dayData.list[idx];
+  const newText = prompt("修改任务内容", task.text);
+  if(newText !== null && newText.trim()!==''){
+    task.text = newText.trim();
+    saveTasks(tasks);
+    renderDayView();
+  }
+}
+
+function clearDayTasks(){
+  if(!confirm("确定清空今天全部任务？日记不会删除。")) return;
+  const tasks = loadTasks();
+  const key = getDayStr(currentDate);
+  if(tasks[key]){
+    tasks[key].list = [];
+  }
+  saveTasks(tasks);
+  renderDayView();
+}
+
+function getWeekDays(baseDate){
+  const d = new Date(baseDate);
+  const day = d.getDay() || 7;
+  d.setDate(d.getDate() - day + 1);
+  let arr = [];
+  for(let i=0;i<7;i++){
+    arr.push(new Date(d));
+    d.setDate(d.getDate()+1);
+  }
+  return arr;
+}
+
+function renderWeekView(){
+  const grid = document.getElementById('weekGrid');
+  grid.innerHTML='';
+  const tasks = loadTasks();
+  const weekDays = getWeekDays(currentDate);
+  weekDays.forEach(d=>{
+    const key = getDayStr(d);
+    const dayData = tasks[key] || {list:[],diary:""};
+    const dayTasks = Array.isArray(dayData) ? dayData : dayData.list;
+    const cell = document.createElement('div');
+    cell.className = 'day-cell ' + (key===todayStr?' today-cell':'');
+    let html = `<b>${d.getMonth()+1}/${d.getDate()}</b>`;
+    dayTasks.slice(0,3).forEach(t=>{
+      html += `<div class="task-mini ${t.done?'done':''}">
+      <span class="priority-tag pri-${t.priority||'mid'}" style="padding:1px 2px">${getPriText(t.priority)}</span>
+      ${escapeHtml(t.text)}
+      </div>`;
+    })
+    if(dayTasks.length>3) html += `<div class="task-mini">+${dayTasks.length-3}</div>`;
+    cell.innerHTML = html;
+    cell.onclick = ()=>{ currentDate = new Date(d); switchView('day'); };
+    grid.appendChild(cell);
+  })
+}
+
+function renderMonthView(){
+  const grid = document.getElementById('monthGrid');
+  grid.innerHTML='';
+  const tasks = loadTasks();
+  const y = currentDate.getFullYear(), m = currentDate.getMonth();
+  const firstDay = new Date(y,m,1);
+  const lastDay = new Date(y,m+1,0);
+  let weekDay = firstDay.getDay() || 7;
+  for(let i=1;i<weekDay;i++){
+    const empty = document.createElement('div'); empty.className='month-cell'; grid.appendChild(empty);
+  }
+  for(let d=1; d<=lastDay.getDate(); d++){
+    const dateObj = new Date(y,m,d);
+    const key = getDayStr(dateObj);
+    const dayData = tasks[key] || {list:[],diary:""};
+    const dayTasks = Array.isArray(dayData) ? dayData : dayData.list;
+    const cell = document.createElement('div');
+    cell.className = 'month-cell ' + (key===todayStr?' today-cell':'');
+    let html = `<b>${d}</b>`;
+    dayTasks.slice(0,2).forEach(t=>{
+      html += `<div class="task-mini ${t.done?'done':''}">
+      <span class="priority-tag pri-${t.priority||'mid'}" style="padding:1px 2px">${getPriText(t.priority)}</span>
+      ${escapeHtml(t.text)}
+      </div>`;
+    })
+    if(dayTasks.length>2) html += `<div class="task-mini">+${dayTasks.length-2}</div>`;
+    cell.innerHTML = html;
+    cell.onclick = ()=>{ currentDate = dateObj; switchView('day'); };
+    grid.appendChild(cell);
+  }
+}
+
+function renderAll(){
+  renderTitle();
+  if(currentView==='day') renderDayView();
+  if(currentView==='week') renderWeekView();
+  if(currentView==='month') renderMonthView();
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+document.querySelectorAll('.view-btn').forEach(b=>{
+  b.onclick = ()=> switchView(b.dataset.view);
+})
+document.getElementById('prevBtn').onclick = ()=> shiftDate(-1);
+document.getElementById('nextBtn').onclick = ()=> shiftDate(1);
+document.getElementById('goTodayBtn').onclick = goToday;
+document.getElementById('addTaskBtn').onclick = addTask;
+document.getElementById('clearDayBtn').onclick = clearDayTasks;
+document.getElementById('taskInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter') addTask();
+})
+document.getElementById("diaryTextarea").addEventListener('blur', saveDiary);
+
+document.getElementById('taskList').addEventListener('click', e=>{
+  const idx = Number(e.target.dataset.idx);
+  if(Number.isNaN(idx)) return;
+  const key = getDayStr(currentDate);
+  const tasks = loadTasks();
+  const dayData = tasks[key];
+  if(!dayData) return;
+  const taskList = Array.isArray(dayData) ? dayData : dayData.list;
+  if(e.target.tagName === 'INPUT'){
+    taskList[idx].done = e.target.checked;
+    saveTasks(tasks);
+    renderDayView();
+  }else if(e.target.classList.contains('del-btn')){
+    taskList.splice(idx,1);
+    saveTasks(tasks);
+    renderDayView();
+  }else if(e.target.classList.contains('task-text')){
+    editTask(idx);
+  }
+})
+
+renderAll();
+</script>
+</body>
+</html>
