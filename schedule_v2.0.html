@@ -102,13 +102,20 @@
             resize: vertical;
             font-size: 14px;
         }
+
+        /* ==========【修改：任务条目放大，拉开间距】========== */
         .task-item {
             display: flex;
             align-items: center;
-            padding: 8px 0;
+            padding: 14px 0;    /* 增大上下间距，不再拥挤 */
             border-bottom: 1px solid #eee;
-            gap: 8px;
+            gap:12px;           /* 元素之间空隙加大 */
             transition: all 0.3s ease;
+        }
+        .task-item input[type="checkbox"]{
+            width:20px;
+            height:20px;    /* 复选框放大 */
+            cursor:pointer;
         }
         .task-item.task-done .task-text {
             text-decoration: line-through;
@@ -117,25 +124,27 @@
         .task-text {
             flex: 1;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 22px;    /* 任务文字放大 */
+            line-height:1.5;
         }
         .task-text:hover {
             color: #4080ff;
         }
         .del-btn {
             background: #ff4d4f;
-            padding: 4px 8px;
-            font-size: 12px;
+            padding: 6px 10px;  /* 删除按钮放大 */
+            font-size: 14px;
         }
         .priority-tag {
-            padding: 1px 4px;
+            padding:3px 8px;     /*优先级标签变大*/
             border-radius: 4px;
-            font-size: 11px;
+            font-size: 13px;
             color: #fff;
         }
         .pri-high { background: #e74c3c; }
         .pri-mid { background: #f39c12; }
         .pri-low { background: #3498db; }
+
         .date-title {
             font-size: 16px;
             font-weight: bold;
